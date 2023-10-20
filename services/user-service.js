@@ -2,15 +2,23 @@ import bcrypt from "bcrypt";
 import User from "../models/user-model.js";
 import tokenService from "./token-service.js";
 import { MAX_COOKIE_AGE } from "../config/server-config.js";
-import DuplicateDataError from "../errors/duplicate-data-error.js";
-import ValidationError from "../errors/validation-error.js";
-import CustomError from "../errors/custom-error.js";
+import {
+  invalidEmailError,
+  CustomError,
+  DuplicateDataError,
+  ValidationError,
+} from "../errors/index.js";
+import validateEmail from "../utils/validate-email.js";
 
 class UserService {
   async register(userData, res) {
     try {
       const userExists = await this.find({ email: userData.email });
       if (userExists) throw new DuplicateDataError("User", userData.email);
+
+      const isValidEmail = validateEmail(userData.email);
+      if (!isValidEmail) throw invalidEmailError;
+
       const user = await this.create(userData);
       const token = tokenService.create({ id: user._id });
       res.cookie("token", token, {
