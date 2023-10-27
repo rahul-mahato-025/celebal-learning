@@ -12,11 +12,19 @@ const authorizeUser = asycnHandler(async (req, res, next) => {
   if (!decodedToken) throw new UnauthorizedError();
 
   // validate the user
-  const user = await userService.find({ id: decodedToken.id });
-  if (!decodedToken) throw new UnauthorizedError();
+  const user = await userService.find({ _id: decodedToken.id });
+  if (!user) throw new UnauthorizedError();
 
   req.user = user;
   next();
 });
 
-export default authorizeUser;
+const authorizeAdmin = asycnHandler(async (req, res, next) => {
+  if (req.user.role !== "admin") throw new UnauthorizedError();
+  next();
+});
+
+export default {
+  authorizeUser,
+  authorizeAdmin,
+};
